@@ -4,11 +4,44 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+/**
+ * User có thể:
+ * - Xem lịch sử (Danh sách đơn hàng của họ - Để xem lại item và xem trạng thái)
+ * - Xóa (Hủy đơn - Chỉ khi trạng thái là Pending)
+ */
 class OrderController extends Controller
 {
+    /**
+     * Lấy danh sách đơn hàng của user hiện tại cùng sản phẩm trong từng đơn.
+     */
     public function index()
     {
-        return auth()->user()->orders()->with('orderItems.product')->latest()->get();
+        $orders = auth()->user()
+            ->orders()
+            ->with('orderItems.product')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
+    /**
+     * Xem chi tiết 1 đơn hàng cụ thể.
+     */
+    public function show($id)
+    {
+        $order = auth()->user()
+            ->orders()
+            ->with('orderItems.product')
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $order
+        ]);
     }
 
     public function store(Request $request)
@@ -18,6 +51,7 @@ class OrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'voucher_id' => 'nullable|exists:vouchers,id',
+            'note' => 'nullable|string',
         ]);
 
         $total = 0;
@@ -42,7 +76,9 @@ class OrderController extends Controller
         $order = auth()->user()->orders()->create([
             'total_price' => $total,
             'voucher_id' => $request->voucher_id,
+            'note' => $request->note,
         ]);
+
 
         foreach ($request->items as $item) {
             $product = \App\Models\Product::find($item['product_id']);
@@ -58,5 +94,18 @@ class OrderController extends Controller
         auth()->user()->cartItems()->delete();
 
         return response()->json(['message' => 'Order placed successfully']);
+    }
+
+    public function cancle($id)
+    {
+        $order = auth()->user()->orders()->where('id', $id)->firstOrFail();
+
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Only pending orders can be cancelled.'], 403);
+        }
+
+        $order->delete();
+
+        return response()->json(['message' => 'Order cancelled successfully.']);
     }
 }

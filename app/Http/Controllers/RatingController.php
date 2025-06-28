@@ -2,10 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Rating;
 use Illuminate\Http\Request;
 
+/**
+ * Customer có thể:
+ * - Thêm, xóa, sửa rating của mình
+ * - Lọc các rating 
+ *   (Khi vào trang sp đã rating, render theo mới nhất, có thể lọc lấy rating của chính user)
+ */
 class RatingController extends Controller
 {
+    public function index(Request $request)
+    {
+        $query = Rating::with('user');
+
+        if ($request->has('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        if ($request->has('only_me') && $request->only_me == '1') {
+            $query->where('user_id', auth()->id());
+        }
+
+        return $query->latest()->paginate(10);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -15,18 +37,30 @@ class RatingController extends Controller
             'image_path' => 'nullable|string',
         ]);
 
-        auth()->user()->ratings()->create($request->all());
+        // Nếu đã từng đánh giá => cập nhật
+        $rating = Rating::updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'product_id' => $request->product_id,
+            ],
+            [
+                'stars' => $request->stars,
+                'description' => $request->description,
+                'image_path' => $request->image_path,
+            ]
+        );
 
-        return response()->json(['message' => 'Rated successfully']);
+        return response()->json([
+            'message' => 'Rating saved successfully',
+            'data' => $rating,
+        ]);
     }
 
-    public function index(Request $request)
+    public function destroy($id)
     {
-        $productId = $request->product_id;
+        $rating = Rating::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        $rating->delete();
 
-        return \App\Models\Rating::with('user')
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
-            ->latest()
-            ->paginate(10);
+        return response()->json(['message' => 'Rating deleted']);
     }
 }

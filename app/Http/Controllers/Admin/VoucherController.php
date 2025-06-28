@@ -8,8 +8,6 @@ use App\Models\Voucher;
 
 class VoucherController extends Controller
 {
-
-
     public function index()
     {
         return Voucher::paginate(10);

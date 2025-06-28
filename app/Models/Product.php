@@ -18,6 +18,13 @@ class Product extends Model
         'base_price',
         'sale_price',
         'quantity',
+        'main_image',
+        'thumbnails',
+    ];
+
+    protected $casts = [
+        'info' => 'array',
+        'thumbnails' => 'array',
     ];
 
     public function productType()

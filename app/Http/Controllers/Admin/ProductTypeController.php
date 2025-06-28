@@ -6,18 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ProductType;
 
+/**
+ * Admin có thể:
+ * - CRUD product cats
+ */
 class ProductTypeController extends Controller
 {
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-
-
     public function index()
     {
         return ProductType::all();
@@ -28,6 +22,13 @@ class ProductTypeController extends Controller
         $data = $request->validate(['name' => 'required|string|max:255']);
         return ProductType::create($data);
     }
+
+    public function show($id)
+    {
+        $productType = ProductType::findOrFail($id);
+        return response()->json($productType);
+    }
+
 
     public function update(Request $request, ProductType $productType)
     {

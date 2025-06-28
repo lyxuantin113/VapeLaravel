@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+/**
+ * Customer có thể:
+ * 
+ * - Thêm, xóa item ở wishlist
+ */
 class WishlistController extends Controller
 {
     public function index()
@@ -26,7 +31,9 @@ class WishlistController extends Controller
 
     public function destroy($id)
     {
-        auth()->user()->wishlist()->where('id', $id)->delete();
+        $wishlistItem = auth()->user()->wishlist()->where('id', $id)->firstOrFail();
+        $wishlistItem->delete();
+
         return response()->json(['message' => 'Removed from wishlist']);
     }
 }

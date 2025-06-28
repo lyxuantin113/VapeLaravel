@@ -9,7 +9,10 @@ class Banner extends Model
     protected $fillable = [
         'section_name',
         'image_path',
+        'title',
+        'description',
         'link',
         'position',
+        'is_active',
     ];
 }

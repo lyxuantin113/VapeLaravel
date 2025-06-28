@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Banner;
+use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
-
     public function index(Request $request)
     {
         $query = Banner::query();
@@ -17,7 +16,7 @@ class BannerController extends Controller
             $query->where('section_name', $request->section);
         }
 
-        return $query->orderBy('position')->get();
+        return $query->orderBy('position')->paginate(10);
     }
 
     public function store(Request $request)
@@ -25,9 +24,13 @@ class BannerController extends Controller
         $data = $request->validate([
             'section_name' => 'required|string',
             'image_path' => 'required|string',
+            'title' => 'nullable|string',
+            'description' => 'nullable|string',
             'link' => 'nullable|string',
             'position' => 'nullable|integer',
+            'is_active' => 'boolean',
         ]);
+
         return Banner::create($data);
     }
 
@@ -36,9 +39,13 @@ class BannerController extends Controller
         $data = $request->validate([
             'section_name' => 'sometimes|string',
             'image_path' => 'sometimes|string',
+            'title' => 'nullable|string',
+            'description' => 'nullable|string',
             'link' => 'nullable|string',
             'position' => 'nullable|integer',
+            'is_active' => 'boolean',
         ]);
+
         $banner->update($data);
         return $banner;
     }
